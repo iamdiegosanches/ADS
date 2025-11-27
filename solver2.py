@@ -1,25 +1,13 @@
 import numpy as np
 
 def solve_linear_system(A, b):
-    """
-    Resolve um sistema linear A x = b
-    usando o solver numérico do NumPy.
-
-    Parâmetros:
-        A (array NxN): matriz de coeficientes
-        b (array N): vetor do lado direito
-
-    Retorna:
-        x (array N): solução do sistema
-    """
     A = np.array(A, dtype=float)
     b = np.array(b, dtype=float)
 
-    # Detecta e trata casos degenerados
     if np.linalg.det(A) == 0:
         raise ValueError("Sistema não possui solução única (matriz singular).")
 
-    return np.linalg.solve(A, b)
+    return np.linalg.solve(A, b) 
 
 
 # --------------------- EXEMPLO DE USO ---------------------
@@ -27,7 +15,7 @@ def solve_linear_system(A, b):
 A = [
     [1, 1, 1, 1, 1, 1],
     [0.6, -2, 0, 0, 1, 0],
-    [1.4, 1, -2, 0, 0, 1],
+    [1.4, 1, -2, 0, 0, 2],
     [0, 0.3, 0, -2, 0, 0],
     [0, 0.7, 0.3, 2, -2, 0],
     [0, 0, 0.7, 0, 1, -2]
@@ -39,3 +27,22 @@ x = solve_linear_system(A, b)
 
 print("Solução:")
 print(x)
+
+s = 0
+for i in x:
+    s += i
+
+print(f"Soma = {s} \n")
+
+
+print("Utilizações: \n")
+
+print("Utilização Esteira:")
+print(0.1890+0.1134+0.3780)
+
+print("Utilização Bike:") # se tem 1 indivíduo tem que dividir a probabilidade por 2
+print(0.1134/2 + 0.0170 + 0.1134/2)
+
+print("Utilização Eliptico: ")
+print(0.3780+0.1134+0.1890)
+
