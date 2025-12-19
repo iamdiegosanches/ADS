@@ -20,14 +20,16 @@ def calcula_mm1(lamb, mu):
     # Mean number of jobs in the queue (E[nq])
     E_nq = rho**2 / (1 - rho)
 
-    # Mean response time (E[r])
+    # Mean response time (E[r]) - Tempo no sistema (Fila + Serviço)
     E_r = 1 / (mu * (1 - rho))
 
-    # Mean waiting time (E[w])
-    E_w = 1 / (mu * (1 - rho))
+    # Mean waiting time (E[w]) - Tempo SOMENTE na fila (CORRIGIDO)
+    # A fórmula anterior estava igual a E_r. A correta multiplica por rho.
+    E_w = rho / (mu * (1 - rho)) 
 
     # Print the results in a formatted way
     print(f"--- M/M/1 Queue Calculations ---")
+    print(f"Inputs: Lambda={lamb:.4f}, Mu={mu:.4f}")
     print(f"Traffic Intensity (rho): {rho:.4f}")
     print(f"Probability of 0 jobs (P0): {P0:.4f}")
     for n in range(5):
@@ -35,8 +37,11 @@ def calcula_mm1(lamb, mu):
     print(f"Mean number of jobs in the system (E[n]): {E_n:.4f}")
     print(f"Variance of number of jobs in the system (Var[n]): {Var_n:.4f}")
     print(f"Mean number of jobs in the queue (E[nq]): {E_nq:.4f}")
-    print(f"Mean response time (E[r]): {E_r:.4f}")
-    print(f"Mean waiting time (E[w]): {E_w:.4f}")
+    print(f"Mean response time (E[r]): {E_r:.4f} s")
+    print(f"Mean waiting time (E[w]): {E_w:.4f} s")
+
+# Executando com os valores do Problema 31.3
+calcula_mm1(lamb=5/3, mu=2.0)
 
 def calcula_mM1B(lamb, mu, B):
     # Calculate traffic intensity (rho)
