@@ -156,8 +156,99 @@ def calcula_mmmb(lamb, mu, m, B):
     print(f"E[w] = {E_w:.4f}")
 
 
-def calcula_mmm():
-    print("calcula teoria de filas mmm")
+def calcula_mmm(lamb, mu, m):
+    # 1. Parâmetros e Intensidade de Tráfego (rho)
+    rho = lamb / (m * mu)
+    
+    # 3. Verificação de estabilidade
+    if rho >= 1:
+        print(f"--- M/M/{m} Queue ---")
+        print(f"Sistema instável (rho = {rho:.4f} >= 1). A fila crescerá indefinidamente.")
+        return
+
+    # 4. Probabilidade de zero jobs no sistema (P0)
+    # Soma dos termos onde n < m
+    soma_inicial = sum(((m * rho)**n) / math.factorial(n) for n in range(m))
+    # Termo onde n >= m
+    termo_final = ((m * rho)**m) / (math.factorial(m) * (1 - rho))
+    
+    P0 = 1 / (soma_inicial + termo_final)
+
+    # 6. Probabilidade de entrar na fila (varrho nas imagens)
+    # P(>= m jobs)
+    prob_queue = (((m * rho)**m) / (math.factorial(m) * (1 - rho))) * P0
+
+    # 7. Número médio de jobs no sistema (E[n])
+    E_n = (m * rho) + (rho * prob_queue) / (1 - rho)
+
+    # 8. Variância do número de jobs no sistema (Var[n])
+    # Termo entre colchetes da fórmula 8
+    term_bracket = ((1 + rho - (rho * prob_queue)) / ((1 - rho)**2)) + m
+    Var_n = (m * rho) + (rho * prob_queue * term_bracket)
+
+    # 9. Número médio de jobs na fila (E[nq])
+    E_nq = (rho * prob_queue) / (1 - rho)
+
+    # 10. Variância do número de jobs na fila (Var[nq])
+    Var_nq = (rho * prob_queue * (1 + rho - (rho * prob_queue))) / ((1 - rho)**2)
+
+    # 11. Utilização média de cada servidor (U)
+    U = rho # Conforme item 11 da imagem
+
+    # 13. Tempo médio de resposta (E[r])
+    # E[r] = (1/mu) * (1 + prob_queue / (m(1-rho)))
+    E_r = (1 / mu) * (1 + prob_queue / (m * (1 - rho)))
+
+    # 14. Variância do tempo de resposta (Var[r])
+    term_var_r = (prob_queue * (2 - prob_queue)) / ((m**2) * ((1 - rho)**2))
+    Var_r = (1 / (mu**2)) * (1 + term_var_r)
+
+    # 16. Tempo médio de espera na fila (E[w])
+    # E[w] = E[nq] / lambda = prob_queue / (m * mu * (1 - rho))
+    E_w = prob_queue / (m * mu * (1 - rho))
+
+    # 17. Variância do tempo de espera (Var[w])
+    Var_w = (prob_queue * (2 - prob_queue)) / ((m**2) * (mu**2) * ((1 - rho)**2))
+
+    # Função auxiliar para calcular Pn (Probabilidade de n jobs) - Item 5
+    def get_Pn(n):
+        if n < m:
+            return P0 * ((m * rho)**n) / math.factorial(n)
+        else:
+            return P0 * ((m * rho)**m) / math.factorial(m) * (rho**(n - m))
+
+    # Percentil 90 do tempo de espera (Item 19)
+    # 90-Percentile = (E[w] / prob_queue) * ln(10 * prob_queue)
+    if prob_queue > 0:
+        percentile_90_w = (E_w / prob_queue) * math.log(10 * prob_queue)
+    else:
+        percentile_90_w = 0
+
+    # Prints formatados
+    print(f"\n--- M/M/{m} Queue Calculations ---")
+    print(f"Inputs: Lambda={lamb:.4f}, Mu={mu:.4f}, m={m}")
+    print(f"Traffic Intensity (rho): {rho:.4f}")
+    print(f"Server Utilization (U): {U:.4f}")
+    print(f"Probability of 0 jobs (P0): {P0:.4f}")
+    print(f"Probability of queueing (varrho): {prob_queue:.4f}")
+    
+    print("-" * 30)
+    for n in range(m + 4): # Mostra probabilidades até m+3
+        print(f"Probability of {n} jobs (P{n}): {get_Pn(n):.4f}")
+    print("-" * 30)
+    
+    print(f"Mean jobs in system (E[n]): {E_n:.4f}")
+    print(f"Variance jobs in system (Var[n]): {Var_n:.4f}")
+    
+    print(f"Mean jobs in queue (E[nq]): {E_nq:.4f}")
+    print(f"Variance jobs in queue (Var[nq]): {Var_nq:.4f}")
+    
+    print(f"Mean response time (E[r]): {E_r:.4f} s")
+    print(f"Variance response time (Var[r]): {Var_r:.4f} s^2")
+    
+    print(f"Mean waiting time (E[w]): {E_w:.4f} s")
+    print(f"Variance waiting time (Var[w]): {Var_w:.4f} s^2")
+    print(f"90th Percentile waiting time: {percentile_90_w:.4f} s")
 
 # Example of usage:
 lamb = 5  # Arrival rate (jobs per unit time)
@@ -166,5 +257,5 @@ B = 3  # Number of buffers in M/M/1/B queue
 
 calcula_mm1(lamb, mu)
 calcula_mM1B(lamb, mu, B)
-calcula_mmm(lamb, mu, m=2)
+calcula_mmm(lamb=5, mu=6, m=2)
 calcula_mmmb(lamb, mu, m=2, B=5)
