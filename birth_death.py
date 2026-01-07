@@ -32,3 +32,23 @@ def calculate_finite_queue(capacity: int, arrival_fn, service_fn):
         },
         "state_table": df[['k', 'lambda', 'mu', 'prob']]
     }
+
+
+# --- Exemplo ---
+
+# Exemplo: Chegam 5/s, Servidor processa 8/s
+lamb = 5.0
+mu = 8.0
+
+
+def mm1_arrival(k):
+    return lamb
+
+def mm1_service(k):
+    return mu
+
+# Capacidade alta (ex: 50) para aproximar uma fila infinita
+resultado = calculate_finite_queue(50, mm1_arrival, mm1_service)
+
+print("--- M/M/1 ---")
+print(resultado['metrics'])
