@@ -1,54 +1,61 @@
-import pandas as pd
-import numpy as np
+def resolver_birth_death(capacidade_max, func_lambda, func_mu):
+    coeficientes = [1.0]
+    produtorio_atual = 1.0
 
-def calculate_finite_queue(capacity: int, arrival_fn, service_fn):
-    k_values = np.arange(capacity + 1)
-    df = pd.DataFrame({'k': k_values})
+    print(f"{'k':<5} | {'lambda(k-1)':<12} | {'mu(k)':<10} | {'Razão':<10}")
+    print("-" * 45)
 
-    df['lambda'] = df['k'].apply(arrival_fn)
-    df['mu'] = df['k'].apply(service_fn)
+    for k in range(1, capacidade_max + 1):
+        taxa_chegada_anterior = func_lambda(k - 1)
+        taxa_servico_atual = func_mu(k)
 
-    prev_lambda = df['lambda'].shift(1) 
-    
-    df['ratio'] = prev_lambda / df['mu']
-    df.loc[0, 'ratio'] = 1.0
+        if taxa_servico_atual == 0:
+            raise ValueError(f"A taxa de serviço (mu) no estado {k} não pode ser zero.")
 
-    df['coef'] = df['ratio'].cumprod()
+        # Cálculo do produtório
+        razao = taxa_chegada_anterior / taxa_servico_atual
+        produtorio_atual *= razao
+        coeficientes.append(produtorio_atual)
+        
+        print(f"{k:<5} | {taxa_chegada_anterior:<12} | {taxa_servico_atual:<10} | {razao:.4f}")
 
-    p0 = 1.0 / df['coef'].sum()
-    df['prob'] = df['coef'] * p0
+    # Normalização (P0)
+    soma_coeficientes = sum(coeficientes)
+    p0 = 1.0 / soma_coeficientes
+    probabilidades = [coef * p0 for coef in coeficientes]
 
-    avg_number_L = (df['k'] * df['prob']).sum()
-    throughput_X = (df['mu'] * df['prob']).sum()
-
-    avg_time_W = avg_number_L / throughput_X if throughput_X > 0 else 0.0
+    # Métricas
+    L = sum(k * p for k, p in enumerate(probabilidades))
+    X = sum(func_mu(k) * probabilidades[k] for k in range(1, capacidade_max + 1))
+    R = L / X if X > 0 else 0
 
     return {
-        "metrics": {
-            "L (Avg System Size)": avg_number_L,
-            "X (Throughput)": throughput_X,
-            "W (Avg Response Time)": avg_time_W,
-            "P_blocking": df.iloc[-1]['prob'] 
-        },
-        "state_table": df[['k', 'lambda', 'mu', 'prob']]
+        "probabilidades": probabilidades,
+        "metrics": {"L": L, "X": X, "R": R}
     }
 
+# --- Configuração do Problema M/M/2/3 ---
+lamb = 1.0
+mu = 1.0  # Taxa de UM servidor
 
-# --- Exemplo ---
-
-# Exemplo: Chegam 5/s, Servidor processa 8/s
-lamb = 5.0
-mu = 8.0
-
-
-def mm1_arrival(k):
+def arrival_fn(k):
     return lamb
 
-def mm1_service(k):
-    return mu
+def service_fn(k):
+    if k == 0: return 0.0
+    if k == 1:
+        return mu       # Apenas 1 servidor ativo
+    else:
+        return 2 * mu   # 2 servidores ativos (para k=2 e k=3)
 
-# Capacidade alta (ex: 50) para aproximar uma fila infinita
-resultado = calculate_finite_queue(50, mm1_arrival, mm1_service)
+# Execução
+resultado = resolver_birth_death(3, arrival_fn, service_fn)
 
-print("--- M/M/1 ---")
-print(resultado['metrics'])
+print("\n--- Resultados M/M/2/3 ---")
+probs = resultado['probabilidades']
+for k, p in enumerate(probs):
+    print(f"P_{k} (Probabilidade de {k} jobs): {p:.4f} ({p*100:.2f}%)")
+
+print("\nMétricas:")
+for k, v in resultado['metrics'].items():
+    print(f"{k}: {v:.4f}")
