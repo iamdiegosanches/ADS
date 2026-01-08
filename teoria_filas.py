@@ -103,6 +103,7 @@ def calcula_mmc(lamb, mu, c):
     print(f"Probabilidade de enfileramento: {varho:.4f} = {varho * 100} %")
     print(f"Variancia: {var_r:.4f} s^2")
     print(f"E_nq: {E_nq:.4f}")
+    print(f"Tempo médio de espera na fila: {E_w:.4f}")
 
 
 def calcula_mM1B(lamb, mu, B):
@@ -313,12 +314,14 @@ def calcula_mmm(lamb, mu, m):
     print(f"90th Percentile waiting time: {percentile_90_w:.4f} s")
 
 # Example of usage:
-lamb = 1.6667  # Arrival rate (jobs per unit time)
-mu = 2  # Service rate (jobs per unit time)
+lamb = 0.1667  # Arrival rate (jobs per unit time)
+c = 3
+mu = 20  # Service rate (jobs per unit time)
 B = 50  # Number of buffers in M/M/1/B queue (T-I)
 
-#calcula_mm1(lamb, mu)
+
+#calcula_mm1(lambda_individual, mu)
 #calcula_mM1B(lamb, mu, B)
-calcula_mmc(lamb=30, mu=20, c=3)
+calcula_mmc(lamb=0.1667, mu=0.1, c=5)
 #calcula_mmm(lamb=5, mu=6, m=2)
 #calcula_mmmb(lamb, mu, m=2, B=5)
