@@ -27,6 +27,13 @@ def calcula_mm1(lamb, mu):
     # A fórmula anterior estava igual a E_r. A correta multiplica por rho.
     E_w = rho / (mu * (1 - rho)) 
 
+    E_s = 1 / mu 
+
+    percentil = 90
+    q = percentil / 100.0
+    # Fórmula: E[r] * ln(100 / (100-percentil))
+    r_90 = E_r * math.log(1 / (1 - q))
+
     # Print the results in a formatted way
     print(f"--- M/M/1 Queue Calculations ---")
     print(f"Inputs: Lambda={lamb:.4f}, Mu={mu:.4f}")
@@ -39,9 +46,64 @@ def calcula_mm1(lamb, mu):
     print(f"Mean number of jobs in the queue (E[nq]): {E_nq:.4f}")
     print(f"Mean response time (E[r]): {E_r:.4f} s")
     print(f"Mean waiting time (E[w]): {E_w:.4f} s")
+    print(f"Mean service time (E[s]): {E_s:.4f} s")
+    print(f"Tempo de resposta 90-percentil: {r_90:.4f} s")
 
-# Executando com os valores do Problema 31.3
-calcula_mm1(lamb=5/3, mu=2.0)
+def calcula_mmc(lamb, mu, c):
+    # 1. Parâmetros Básicos
+    u = lamb / mu           # Intensidade de Tráfego (em Erlangs)
+    rho = u / c             # Utilização por servidor (rho < 1 para estabilidade)
+    E_s = 1 / mu            # Tempo médio de serviço
+
+    print(f"--- Sistema M/M/{c} ---")
+    print(f"Inputs: Lambda={lamb}, Mu={mu}, c={c}")
+    print(f"Utilização (rho): {rho:.2%}")
+
+    if rho >= 1:
+        print("SISTEMA INSTÁVEL (rho >= 1). Fila crescerá infinitamente.")
+        return
+
+    # 2. Cálculo de P0 (Probabilidade de Ociosidade)
+    # Somatório dos primeiros termos (n=0 até c-1)
+    soma_termos = sum([(u**n) / math.factorial(n) for n in range(c)])
+    
+    # Termo final da série (para n >= c)
+    termo_final = (u**c) / (math.factorial(c) * (1 - rho))
+    
+    P0 = 1 / (soma_termos + termo_final)
+    
+    # 3. Probabilidade de Fila (Erlang-C)
+    # Probabilidade de que um job que chega tenha que esperar
+    P_wait = termo_final * P0 
+
+    # 4. Métricas de Desempenho
+    # Número médio na fila (E[nq] ou Lq)
+    E_nq = (P_wait * rho) / (1 - rho)
+    
+    # Número médio no sistema (E[n] ou L) = Fila + Em Serviço
+    # Média em serviço é u (lambda/mu)
+    E_n = E_nq + u
+    
+    # Tempo médio de espera na fila (E[w] ou Wq)
+    E_w = E_nq / lamb
+    
+    # Tempo médio de resposta (E[r] ou W) = Espera + Serviço
+    E_r = E_w + E_s
+
+    varho = (((c * rho)**c) / (math.factorial(c) * (1 - rho))) * P0
+
+    var_r = (1/(mu**2))*(1 + ((varho * (2-varho))/(c**2 * (1-rho)**2)))
+
+    # --- Impressão dos Resultados ---
+    print(f"Utilização média dos discos (U): {rho:.4f}")
+    print(f"Probabilidade de sistema ocioso (P0): {P0:.4f}")
+    print(f"Probabilidade de ter que esperar (P_wait): {P_wait:.4f}")
+    print(f"Número médio de jobs no sistema (E[n]): {E_n:.4f}")
+    print(f"Tempo médio de resposta (E[r]): {E_r:.4f} s")
+    print(f"Probabilidade de enfileramento: {varho:.4f} = {varho * 100} %")
+    print(f"Variancia: {var_r:.4f} s^2")
+    print(f"E_nq: {E_nq:.4f}")
+
 
 def calcula_mM1B(lamb, mu, B):
     # Calculate traffic intensity (rho)
@@ -251,11 +313,12 @@ def calcula_mmm(lamb, mu, m):
     print(f"90th Percentile waiting time: {percentile_90_w:.4f} s")
 
 # Example of usage:
-lamb = 5  # Arrival rate (jobs per unit time)
-mu = 6  # Service rate (jobs per unit time)
-B = 3  # Number of buffers in M/M/1/B queue
+lamb = 1.6667  # Arrival rate (jobs per unit time)
+mu = 2  # Service rate (jobs per unit time)
+B = 50  # Number of buffers in M/M/1/B queue (T-I)
 
-calcula_mm1(lamb, mu)
-calcula_mM1B(lamb, mu, B)
-calcula_mmm(lamb=5, mu=6, m=2)
-calcula_mmmb(lamb, mu, m=2, B=5)
+#calcula_mm1(lamb, mu)
+#calcula_mM1B(lamb, mu, B)
+calcula_mmc(lamb=30, mu=20, c=3)
+#calcula_mmm(lamb=5, mu=6, m=2)
+#calcula_mmmb(lamb, mu, m=2, B=5)
