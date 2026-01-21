@@ -1,4 +1,5 @@
 import math
+from decimal import Decimal, getcontext
 
 def calcula_mm1(lamb, mu):
     # Calculate traffic intensity (rho)
@@ -185,33 +186,61 @@ def calcula_mmm(lamb, mu, m):
     print(f"E[r] = {E_r:.4f}")
     print(f"E[w] = {E_w:.4f}")
 
-
+getcontext().prec = 1000
 def calcula_mmmb(lamb, mu, m, B):
+    # Convertendo para Decimal para evitar erro de overflow
+    lamb = Decimal(lamb)
+    mu = Decimal(mu)
     rho = lamb / (m * mu)
+    
+    # 1. Cálculo da Soma para P0
+    soma = Decimal(0)
+    
+    # Parte 1: Somatório de 0 até m-1
+    for n in range(m):
+        # Usamos Decimal(math.factorial(n)) para o Python tratar como número exato
+        termo = ((m * rho)**n) / Decimal(math.factorial(n))
+        soma += termo
 
-    soma = sum((m * rho)**n / math.factorial(n) for n in range(m))
-    soma += sum((m * rho)**m * rho**(n - m) / math.factorial(m) for n in range(m, B + 1))
+    # Parte 2: Somatório de m até B
+    # Calculamos o termo base do fatorial de m uma vez só para economizar
+    fatorial_m = Decimal(math.factorial(m))
+    termo_base_m = ((m * rho)**m) / fatorial_m
+    
+    for n in range(m, B + 1):
+        termo = termo_base_m * (rho**(n - m))
+        soma += termo
+
     P0 = 1 / soma
 
-    def Pn(n):
+    # 2. Função interna para Pn (adaptada para Decimal)
+    def get_Pn(n):
         if n < m:
-            return P0 * (m * rho)**n / math.factorial(n)
+            return P0 * ((m * rho)**n) / Decimal(math.factorial(n))
         elif n <= B:
-            return P0 * (m * rho)**m / math.factorial(m) * rho**(n - m)
+            return P0 * termo_base_m * (rho**(n - m))
         else:
-            return 0
+            return Decimal(0)
 
-    PB = Pn(B)
+    # 3. Cálculos Finais
+    PB = get_Pn(B)
     lamb_eff = lamb * (1 - PB)
 
-    E_n = sum(n * Pn(n) for n in range(B + 1))
-    E_nq = sum(max(0, n - m) * Pn(n) for n in range(B + 1))
-    E_r = E_n / lamb_eff
-    E_w = E_nq / lamb_eff
+    # Nota: Converta n para Decimal nas multiplicações
+    E_n = sum(Decimal(n) * get_Pn(n) for n in range(B + 1))
+    E_nq = sum(max(Decimal(0), Decimal(n) - m) * get_Pn(n) for n in range(B + 1))
+    
+    # Evitar divisão por zero se lamb_eff for 0
+    if lamb_eff > 0:
+        E_r = E_n / lamb_eff
+        E_w = E_nq / lamb_eff
+    else:
+        E_r = Decimal(0)
+        E_w = Decimal(0)
 
-    print(f"\n--- M/M/{m}/B (B={B}) ---")
+    print(f"\n--- M/M/{m}/{B} ---")
     print(f"rho = {rho:.4f}")
-    print(f"P0 = {P0:.4f}")
+    print(f"P0 = {P0:.4E}") # .4E usa notação científica se for muito pequeno
     print(f"PB = {PB:.4f}")
     print(f"E[n] = {E_n:.4f}")
     print(f"E[nq] = {E_nq:.4f}")
@@ -319,9 +348,8 @@ c = 3
 mu = 20  # Service rate (jobs per unit time)
 B = 50  # Number of buffers in M/M/1/B queue (T-I)
 
-
-#calcula_mm1(lambda_individual, mu)
+#calcula_mm1(lamb=56.67, mu=100)
 #calcula_mM1B(lamb, mu, B)
-calcula_mmc(lamb=0.1667, mu=0.1, c=5)
-#calcula_mmm(lamb=5, mu=6, m=2)
-#calcula_mmmb(lamb, mu, m=2, B=5)
+#calcula_mmc(lamb=0.1667, mu=0.1, c=5)
+#calcula_mmm(lamb=0.6, mu=0.2, m=8)
+calcula_mmmb(lamb=140, mu=(1/12), m=1612, B=1612)
