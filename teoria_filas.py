@@ -316,6 +316,13 @@ def calcula_mmm(lamb, mu, m):
     else:
         percentile_90_w = 0
 
+    q = 96
+    if prob_queue > 0:
+        q_percentile = max(0, (E_w / prob_queue)  * math.log((100 * prob_queue) / (100 - q)) )
+    
+    if percentile_90_w < 0:
+        percentile_90_w = 0
+    
     # Prints formatados
     print(f"\n--- M/M/{m} Queue Calculations ---")
     print(f"Inputs: Lambda={lamb:.4f}, Mu={mu:.4f}, m={m}")
@@ -341,6 +348,7 @@ def calcula_mmm(lamb, mu, m):
     print(f"Mean waiting time (E[w]): {E_w:.4f} s")
     print(f"Variance waiting time (Var[w]): {Var_w:.4f} s^2")
     print(f"90th Percentile waiting time: {percentile_90_w:.4f} s")
+    print(f"{q}th percentile: {q_percentile:.4f}")
 
 # Example of usage:
 lamb = 0.1667  # Arrival rate (jobs per unit time)
@@ -351,5 +359,5 @@ B = 50  # Number of buffers in M/M/1/B queue (T-I)
 #calcula_mm1(lamb=56.67, mu=100)
 #calcula_mM1B(lamb, mu, B)
 #calcula_mmc(lamb=0.1667, mu=0.1, c=5)
-#calcula_mmm(lamb=0.6, mu=0.2, m=8)
-calcula_mmmb(lamb=140, mu=(1/12), m=1612, B=1612)
+calcula_mmm(lamb=0.6, mu=0.2, m=7)
+#calcula_mmmb(lamb=140, mu=(1/12), m=1612, B=1612)
