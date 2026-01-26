@@ -34,24 +34,25 @@ def resolver_birth_death(capacidade_max, func_lambda, func_mu):
         "metrics": {"L": L, "X": X, "R": R}
     }
 
-# --- Configuração do Problema M/M/2/3 ---
+# --- Configuração do Problema  ---
 lamb = 1.0
-mu = 1.0  # Taxa de UM servidor
+mu = 0.5 
 
 def arrival_fn(k):
-    return lamb
+    if k <= 7:
+        return 2.9187
+    elif k == 8 or k == 9:
+        return 0.8333
+    else:
+        return 0
 
 def service_fn(k):
-    if k == 0: return 0.0
-    if k == 1:
-        return mu       # Apenas 1 servidor ativo
-    else:
-        return 2 * mu   # 2 servidores ativos (para k=2 e k=3)
+    return k * mu
 
 # Execução
-resultado = resolver_birth_death(3, arrival_fn, service_fn)
+resultado = resolver_birth_death(10, arrival_fn, service_fn)
 
-print("\n--- Resultados M/M/2/3 ---")
+print("\n--- Resultados ---")
 probs = resultado['probabilidades']
 for k, p in enumerate(probs):
     print(f"P_{k} (Probabilidade de {k} jobs): {p:.4f} ({p*100:.2f}%)")
